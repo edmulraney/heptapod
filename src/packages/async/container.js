@@ -1,11 +1,16 @@
-export default function asyncContainer(props) {
-  if (props.isLoading) {
-    return "Loading..."
-  }
+import React from "react"
 
-  if (props.error) {
-    return `Oops something went wrong! ${props.error}`
-  }
+export default function asyncContainer(component) {
+  return function(props) {
+    console.log({props}, props.isLoading)
+    if (props.isLoading) {
+      return "Loading..."
+    }
 
-  return props.children
+    if (props.error) {
+      return `Oops something went wrong! ${props.error}`
+    }
+
+    return component
+  }
 }

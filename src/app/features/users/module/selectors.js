@@ -1,9 +1,9 @@
 import {path} from "ramda"
 
 //generic - goes in packages/async/selectors?
-function asyncSelector(state) {
-  return function(feature) {
-    return function(component) {
+function asyncSelector(feature) {
+  return function(component) {
+    return function(state) {
       return {
         isLoading: path([feature, component], "isLoading"),
         error: path([feature, component], "error"),
@@ -12,11 +12,12 @@ function asyncSelector(state) {
   }
 }
 
-function usersSelector(state) {
+function usersSelector(model) {
+  const asyncState = asyncSelector("users")("list")(model)
   return {
-    ...asyncSelector("users")("list"),
-    list: path(["users", "list"], state),
-  }    
+    ...asyncState,
+    list: path(["users", "list"], model),
+  }
 }
 
 export {
