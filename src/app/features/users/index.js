@@ -6,12 +6,13 @@ import effects from "./module/effects"
 import {mutations} from "./module/mutations"
 import state from "./module/state"
 
-const initialStatus = {
+const initialState = {
   state: null, // INIT, READY, ERROR, MAXIMUM_USERS_REACHED,
   list: null,
 }
 
 export default {
+  initialState,
   selector,
   component: asyncContainer(component),
   events,

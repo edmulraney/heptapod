@@ -5,87 +5,44 @@ const model = {
   present: step,
   subscribers: [],
   actions: {},
-  mutations: {
-    SET_MESSAGE: (proposal, model) => model.data.message = proposal.payload,
-    FETCH_USERS: (proposal, model) => model.data.usersRequested = true,
+  features: {},
+  currentFeature: null, // will be handled by a Router eventually
+  data: {},
+  mutations: { // may need to be array not obj
+    FETCH_USERS: (proposal, model) => model.data.users.usersRequested = true,
     FETCH_USERS_SUCCESS: (proposal, model) => {
-      model.data.users = proposal.payload
-      model.data.usersRequested = false
+      model.data.users.list = proposal.payload
+      model.data.users.usersRequested = false
     },
     FETCH_USERS_FAILED: (proposal, model) => {
       model.data.error = proposal.payload
-      model.data.usersRequested = false
+      model.data.users.usersRequested = false
     },
   },
-  features: {},
   subscribe: subscriber => {
     model.subscribers.push(subscriber)
     return function unsubscribe() {
       model.subscribers = model.subscribers.filter(l => l !== subscriber)
     }
   },
-  data: {},
-  // render: renderer => state => renderer(state),
 }
 
 function step(proposal) {
+  const state = model.currentFeature.state({...model.currentFeature.initialState, ...model.data})
+  const Component = model.currentFeature.component(state)
   model.mutations[proposal.type] && model.mutations[proposal.type](proposal, model)
-  model.render(UserView(state(model)))
+  model.render(Component)
   model.subscribers.forEach(subscriber => subscriber(model.data))
-  nap(state(model))
+  model.currentFeature.nap(state(model))
 }
 
-const api = {fetch: () => Promise.resolve(["Bob", "Alice", "Joe"])}
-// const api = {fetch: () => Promise.reject("Not authenticated")}
-
-function state(model) {
-  return {
-    // from UserViewSelector
-    shouldFetchUsers: model.data.usersRequested,
-    users: model.data.users || ["loading"],
-    message: model.data.message,
-  }
-}
-
-function nap(state) {
-  if (state.shouldFetchUsers) {
-    return api.fetch()
-      .then(users => setTimeout(function() {
-        model.present({type: "FETCH_USERS_SUCCESS", payload: users})
-      }, 1000))
-      .catch(error => model.present({type: "FETCH_USERS_FAILED", payload: error}))
-  }
-}
-
-// export function start(render) {
-export function start(renderer) {
+export function start(renderer, manifest) {
   model.render = renderer
+  model.features = manifest.features
+  model.currentFeature = manifest.defaultFeature
+
   return {
     present: model.present,
     subscribe: model.subscribe,
-    // render: model.render(renderer),
   }
 }
-
-function UserView(props) {
-  return (
-    <div>
-      <div>Message: {props.message}</div>
-      <div>{props.users[0]}</div>
-    </div>
-  )
-}
-
-// const log = model.subscribe(console.log)
-// const render = model.subscribe(() => console.log("RENDERING..")) ??
-// const syncSendMsgAction = msg => model.present({type: "message", payload: msg})
-
-///////////////////
-/*
-const renderer = console.log
-
-const app = start(renderer)
-app.subscribe(renderer)
-app.present({type: "message", payload: "yo"})
-app.present({type: "FETCH_USERS"})
-*/
