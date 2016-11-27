@@ -12,6 +12,7 @@ const initialState = {
 }
 
 export default {
+  name: "users", // do we need this? (for mounting feature data in model.data)
   initialState,
   selector,
   component: asyncContainer(component),

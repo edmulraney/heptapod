@@ -1,5 +1,5 @@
 import React from "react"
-import {filter} from "ramda"
+import {filter, keys} from "ramda"
 
 const model = {
   present: step,
@@ -28,19 +28,23 @@ const model = {
 }
 
 function step(proposal) {
-  const state = model.currentFeature.state({...model.currentFeature.initialState, ...model.data})
-  const Component = model.currentFeature.component(state)
+  const props = {...model.currentFeature.initialState, ...model.data}
+  const state = model.currentFeature.state(props)
+  const propsWithState  = {...props, state}
+  const Component = model.currentFeature.component
   model.mutations[proposal.type] && model.mutations[proposal.type](proposal, model)
-  model.render(Component)
+  // model.render(Component(propsWithState))
   model.subscribers.forEach(subscriber => subscriber(model.data))
-  model.currentFeature.nap(state(model))
+  model.currentFeature.effects(propsWithState)
 }
 
 export function start(renderer, manifest) {
   model.render = renderer
   model.features = manifest.features
   model.currentFeature = manifest.defaultFeature
-
+  keys(manifest.features).forEach(featureKey =>
+    model.data[manifest.features[featureKey].name] = manifest.features[featureKey].initialState)
+  console.log(model.data)
   return {
     present: model.present,
     subscribe: model.subscribe,
