@@ -9,11 +9,13 @@ import state from "./module/state"
 const initialState = {
   state: null, // INIT, READY, ERROR, MAXIMUM_USERS_REACHED,
   list: null,
+  isLoading: true,
+  error: null,
 }
 
 export default {
   name: "users", // do we need this? (for mounting feature data in model.data)
-  initialState,
+  initialState, // should be initialEffect? (optional)
   selector,
   component: asyncContainer(component),
   events,

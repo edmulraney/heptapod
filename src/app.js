@@ -9,5 +9,4 @@ const renderer = view => ReactDOM.render(view, document.getElementById("app"))
 
 var app = start(renderer, manifest)
 app.subscribe(console.log)
-app.present({type: "SET_MESSAGE", payload: "yo"})
 app.present({type: "FETCH_USERS"})

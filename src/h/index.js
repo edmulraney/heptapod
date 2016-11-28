@@ -2,21 +2,29 @@ import React from "react"
 import {filter, keys} from "ramda"
 
 const model = {
-  present: step,
+  present: cycle,
   subscribers: [],
   actions: {},
   features: {},
   currentFeature: null, // will be handled by a Router eventually
   data: {},
-  mutations: { // may need to be array not obj
-    FETCH_USERS: (proposal, model) => model.data.users.usersRequested = true,
+  mutations: { // may need to be array not obj (multi handlers one type)
+    FETCH_USERS: (proposal, model) => {
+      model.data.users.hasRequested = true
+      model.data.users.isLoading = true
+      console.log("FETCH_USERS", proposal, model)
+    },
     FETCH_USERS_SUCCESS: (proposal, model) => {
       model.data.users.list = proposal.payload
-      model.data.users.usersRequested = false
+      model.data.users.hasRequested = false
+      model.data.users.isLoading = false
+      console.log("FETCH_USERS_SUCCESS", proposal, model)
     },
     FETCH_USERS_FAILED: (proposal, model) => {
       model.data.error = proposal.payload
-      model.data.users.usersRequested = false
+      model.data.users.hasRequested = false
+      model.data.users.isLoading = false
+      console.log("FETCH_USERS_FAILED", proposal, model)
     },
   },
   subscribe: subscriber => {
@@ -27,15 +35,24 @@ const model = {
   },
 }
 
-function step(proposal) {
-  const props = {...model.currentFeature.initialState, ...model.data}
+function cycle(proposal) {
+  // if (!proposal) return
+  console.log({proposal, model})
+  const mutator = model.mutations[proposal.type] && model.mutations[proposal.type]
+  mutator(proposal, model)
+  // must be calculated after mutating
+  const props = model.data[model.currentFeature.name]
   const state = model.currentFeature.state(props)
-  const propsWithState  = {...props, state}
+  const propsWithState = {...props, state}
   const Component = model.currentFeature.component
-  model.mutations[proposal.type] && model.mutations[proposal.type](proposal, model)
-  // model.render(Component(propsWithState))
+  model.render(Component(propsWithState))
   model.subscribers.forEach(subscriber => subscriber(model.data))
-  model.currentFeature.effects(propsWithState)
+  const effect = model.currentFeature.effects(propsWithState)
+  if (effect) {
+    return effect.then(proposal => {
+      return cycle(proposal)
+    })
+  }
 }
 
 export function start(renderer, manifest) {
@@ -44,7 +61,6 @@ export function start(renderer, manifest) {
   model.currentFeature = manifest.defaultFeature
   keys(manifest.features).forEach(featureKey =>
     model.data[manifest.features[featureKey].name] = manifest.features[featureKey].initialState)
-  console.log(model.data)
   return {
     present: model.present,
     subscribe: model.subscribe,

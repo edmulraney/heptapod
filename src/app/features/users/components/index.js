@@ -7,16 +7,14 @@ import AddUserButton from "./elements/add-user-button"
 const stateComponentMap = {
   MAXIMUM_USERS_REACHED: MaxUsersReached,
   NO_USERS: NoUsers,
-  READY: Users, //invalid one shouldnt be here
+  READY: Users,
+  //invalid one shouldnt be here
   INVALID_STATE: () => <div>Invalid component state... oh no something went wrong</div>,
 }
 
 const hasStates = states => state => all(s => has(s, state), states)
 
 function statePredicateMap(state) {
-  if (state.INIT) {
-    return stateComponentMap.INIT
-  }
   if (state.READY && state.MAXIMUM_USERS_REACHED) {
     return stateComponentMap.MAXIMUM_USERS_REACHED
   }
@@ -34,10 +32,10 @@ function statePredicateMap(state) {
 
 
 export default function Component(props) {
-  let Component = statePredicateMap(props.state)(props)
+  let StateComponent = statePredicateMap(props.state)
   return (
     <div>
-      <Component {...props} />
+      <StateComponent {...props} />
       <AddUserButton {...props} />
     </div>
   )

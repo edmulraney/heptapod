@@ -1,16 +1,15 @@
 import React from "react"
 
-export default function asyncContainer(component) {
+export default function asyncContainer(Component) {
   return function(props) {
-    console.log({props}, props.isLoading)
     if (props.isLoading) {
-      return "Loading..."
+      return <div>Loading...</div>
     }
 
     if (props.error) {
-      return `Oops something went wrong! ${props.error}`
+      return <div>Oops something went wrong! {props.error}</div>
     }
 
-    return component
+    return <Component {...props} />
   }
 }
